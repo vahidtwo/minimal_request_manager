@@ -19,6 +19,7 @@ class Command:
 class ExitCommand(Command):
     async def execute(self):
         self.controller.stop()
+        exit(0)
 
 
 class StartProviderCommand(Command):
