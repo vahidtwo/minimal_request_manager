@@ -2,10 +2,10 @@ import random
 
 import questionary
 
-from controler import Controller
-from integration import Provider
-from integration.utils import CLIActions
-from log import logger
+from .controler import Controller
+from .integration import Provider
+from .integration.utils import CLIActions
+from .log import logger
 
 
 class Command:
@@ -147,9 +147,10 @@ class SimulateCommand(Command):
 
 class AddProviderCommand(Command):
     async def execute(self):
-        provider_name = int(
-            await questionary.text("put name of provider", default="P[n]").ask_async()
-        )
+        provider_name = await questionary.text(
+            "put name of provider", default="P[n]"
+        ).ask_async()
+
         rate_limit = float(
             await questionary.text(
                 "put your provider rate-limit request/second", default="10.0"

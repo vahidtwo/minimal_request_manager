@@ -1,12 +1,12 @@
 import asyncio
 import logging
 from asyncio import PriorityQueue
-
-from request_manager.integration.utils import StatusCode, Response
-from request_manager.log import logger
+from .utils import StatusCode, Response
 
 import datetime
 import time
+
+from request_manager.log import logger
 
 
 class JobRequest:

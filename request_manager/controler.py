@@ -2,7 +2,7 @@ import asyncio
 import datetime
 from asyncio import Task
 
-from . import Provider, JobRequest
+from .integration import Provider, JobRequest
 from .log import logger
 
 

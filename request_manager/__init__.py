@@ -1,4 +1,5 @@
-from .integration import CLIActions, StatusCode, Provider, JobRequest, Response
+from .integration.adaptor import StatusCode, Provider, JobRequest, Response
+from .integration.utils import CLIActions
 from .controler import Controller
 
 __all__ = [
