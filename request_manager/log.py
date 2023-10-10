@@ -1,4 +1,4 @@
 import logging
 
-logger = logging.Logger("toman", logging.INFO)
+logger = logging.Logger("toman", logging.WARNING)
 logger.addHandler(logging.StreamHandler())
