@@ -1,4 +1,5 @@
 import dataclasses
+import enum
 from typing import Any
 
 
@@ -12,3 +13,10 @@ class StatusCode:
 class Response:
     status_code: int
     data: dict[str, Any]
+
+
+class CLIActions(enum.StrEnum):
+    START_PROVIDER = "start provider"
+    STOP_PROVIDER = "stop provider"
+    ADD_REQUEST = "add request"
+    EXIT = "exit program"
