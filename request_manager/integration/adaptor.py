@@ -68,7 +68,7 @@ class Provider:
         pending_request_queue (asyncio.PriorityQueue): A priority queue for pending requests that are not ready.
     """
 
-    def __init__(self, name, rate_limit):
+    def __init__(self, name, rate_limit) -> None:
         self.name = name
         self.rate_limit = rate_limit
         self.last_request_time = 0
@@ -107,13 +107,13 @@ class Provider:
         logger.debug(f"sending request [{request.name}] with provider {self.name}")
         return Response(status_code=StatusCode.SUCCESS, data={"message": "done"})
 
-    def start(self):
+    def start(self) -> None:
         """
         Enable the provider to start sending requests.
         """
         self.enabled.set()
 
-    async def check_pending_request(self):
+    async def check_pending_request(self) -> None:
         """
         Check and process pending requests in the queue.
         """
@@ -172,7 +172,7 @@ class Provider:
                 await self.queue.put((priority, request))
             self.queue.task_done()
 
-    async def stop(self):
+    async def stop(self) -> None:
         """
         Disable the provider to stop sending requests.
         """
