@@ -20,12 +20,14 @@ class Command:
 
 class ExitCommand(Command):
     async def execute(self):
+        """stop controller and exit from cli"""
         self.controller.stop()
         exit(0)
 
 
 class StartProviderCommand(Command):
     async def execute(self):
+        """enabled the provider to start send request"""
         providers = self.controller.providers.values()
         available_providers = [
             provider.name for provider in providers if not provider.enabled.is_set()
@@ -43,6 +45,7 @@ class StartProviderCommand(Command):
 
 class StopProviderCommand(Command):
     async def execute(self):
+        """disable provider to stop send request"""
         providers = self.controller.providers.values()
         available_providers = [
             provider.name for provider in providers if provider.enabled.is_set()
@@ -60,6 +63,7 @@ class StopProviderCommand(Command):
 
 class AddRequestCommand(Command):
     async def execute(self):
+        """add request to a provider"""
         providers = self.controller.providers.values()
         available_providers = [
             provider.name for provider in providers if provider.enabled.is_set()
@@ -90,6 +94,7 @@ class AddRequestCommand(Command):
 
 class RunCommand(Command):
     async def execute(self):
+        """Run the controller to start sending task by added providers and requests"""
         self.controller.start()
         for provider in self.controller.providers:
             logger.info(
@@ -100,6 +105,7 @@ class RunCommand(Command):
 
 class SimulateCommand(Command):
     async def execute(self):
+        """simulate whole process of sending request include add request and add provider"""
         random.seed(0)
         provider_count = int(
             await questionary.text("put your provider count", default="2").ask_async()
@@ -150,6 +156,7 @@ class SimulateCommand(Command):
 
 class AddProviderCommand(Command):
     async def execute(self):
+        """add provider to my controller"""
         provider_name = await questionary.text(
             "put name of provider", default="P[n]"
         ).ask_async()
@@ -163,6 +170,7 @@ class AddProviderCommand(Command):
 
 
 async def cli(controller: Controller | None = None):
+    # todo refactor cli for return better response
     if controller is None:
         controller = Controller()
     command_mapping = {
