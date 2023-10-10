@@ -1,3 +1,5 @@
+import asyncio
+import logging
 import random
 
 import questionary
@@ -184,3 +186,8 @@ async def cli(controller: Controller | None = None):
             await command.execute()
         await controller.wait_for_complete()
         input("Press Enter to continue")
+
+
+def main():
+    logger.setLevel(logging.INFO)
+    asyncio.run(cli())
