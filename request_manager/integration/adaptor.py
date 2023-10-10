@@ -128,49 +128,62 @@ class Provider:
                 await self.pending_request_queue.put((priority, request))
             self.pending_request_queue.task_done()
 
-    async def run(self):
+    async def _run_job(self) -> None:
         """
-        Start the provider to send requests.
+        run jobs in queues according to their priority
+        the enabled provider will send request on its  rate_limit
+        the jobs collect from the queue
+        if job is ready (arrive to execution time) send request
+        if job is not ready send it to pending queue
+
+        if a job field we retry 3 time before drop it
+        # TODO change it from hardcoded value and add this task to a list for trac the errors
+        """
+        await self.enabled.wait()
+        await self.wait_for_rate_limit()
+        await self.check_pending_request()
+        request: JobRequest
+        priority, request = await self.queue.get()
+        if request.is_ready is False:
+            logger.info(
+                f"add request[{request.name}] to pending queue in provider[{self.name}]"
+            )
+            self.pending_request_queue.put_nowait((priority, request))
+            self.queue.task_done()
+            return
+        result = await self.send_request(request)
+        current_time = datetime.datetime.now().strftime("%H:%M:%S")
+        msg = (
+            "Sent request {} to provider {} with priority {} at {}"
+            " (Execution time: {}) {} request remain"
+        ).format(
+            request.name,
+            request.provider.name,
+            request.priority * -1,
+            current_time,
+            datetime.datetime.fromtimestamp(request.execution_time).strftime(
+                "%H:%M:%S"
+            ),
+            self.queue.qsize(),
+        )
+        logger.info("{}\n| {} |\n{}".format("+" * 100, msg, "+" * 100))
+        if result.status_code != StatusCode.SUCCESS:
+            if request.retry_count >= 3:
+                logging.error(
+                    f"{request} in provider {self.name} has been retried 3 times"
+                )
+                self.queue.task_done()
+                return
+            request.retry_count += 1
+            await self.queue.put((priority, request))
+        self.queue.task_done()
+
+    async def run(self) -> None:
+        """
+        infinite loop for run jobs on the queue
         """
         while True:
-            await self.enabled.wait()
-            await self.wait_for_rate_limit()
-            await self.check_pending_request()
-            request: JobRequest
-            priority, request = await self.queue.get()
-            if request.is_ready is False:
-                logger.info(
-                    f"add request[{request.name}] to pending queue in provider[{self.name}]"
-                )
-                self.pending_request_queue.put_nowait((priority, request))
-                self.queue.task_done()
-                continue
-            result = await self.send_request(request)
-            current_time = datetime.datetime.now().strftime("%H:%M:%S")
-            msg = (
-                "Sent request {} to provider {} with priority {} at {}"
-                " (Execution time: {}) {} request remain"
-            ).format(
-                request.name,
-                request.provider.name,
-                request.priority * -1,
-                current_time,
-                datetime.datetime.fromtimestamp(request.execution_time).strftime(
-                    "%H:%M:%S"
-                ),
-                self.queue.qsize(),
-            )
-            logger.info("{}\n| {} |\n{}".format("+" * 100, msg, "+" * 100))
-            if result.status_code != StatusCode.SUCCESS:
-                if request.retry_count >= 3:
-                    logging.error(
-                        f"{request} in provider {self.name} has been retried 3 times"
-                    )
-                    self.queue.task_done()
-                    continue
-                request.retry_count += 1
-                await self.queue.put((priority, request))
-            self.queue.task_done()
+            await self._run_job()
 
     async def stop(self) -> None:
         """
