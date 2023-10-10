@@ -16,6 +16,9 @@ class Response:
 
 
 class CLIActions(enum.StrEnum):
+    SIMULATE = "simulate and start jobs"
+    RUN = "start jobs"
+    ADD_PROVIDER = "add new provider"
     START_PROVIDER = "start provider"
     STOP_PROVIDER = "stop provider"
     ADD_REQUEST = "add request"
