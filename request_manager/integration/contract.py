@@ -1,21 +1,16 @@
 import asyncio
-import datetime
 from asyncio import PriorityQueue
-from typing import Protocol
 
-from request_manager.integration.adaptor import JobRequest
 from request_manager.integration.utils import Response
 
+import datetime
+import time
 
-class JobRequestProtocol(Protocol):
-    provider: "ProviderProtocol"
-    priority: int
-    execution_after: datetime.datetime | int = 0
-    name: str = ""
 
+class JobRequest:
     def __init__(
         self,
-        provider: "ProviderProtocol",
+        provider: "Provider",
         priority: int,
         execution_after: datetime.datetime | int = 0,
         name: str = "",
@@ -40,29 +35,65 @@ class JobRequestProtocol(Protocol):
         """Check if the job request is ready for execution."""
 
 
-class ProviderProtocol(Protocol):
-    def __init__(self, name, rate_limit):
-        self.name = name
-        self.rate_limit = rate_limit
-        self.last_request_time = 0
-        self.enabled = asyncio.Event()
-        self.enabled.set()
-        self.queue = PriorityQueue()
+class Provider:
+    """
+    Represents a service provider for sending requests.
+
+    Attributes:
+        name (str): The name of the provider.
+        rate_limit (float): The rate limit for sending requests per second.
+        last_request_time (float): The timestamp of the last sent request.
+        enabled (asyncio.Event): An event that controls whether the provider is enabled.
+        queue (asyncio.PriorityQueue): A priority queue for pending requests.
+        pending_request_queue (asyncio.PriorityQueue): A priority queue for pending requests that are not ready.
+    """
+
+    def __init__(self, name: str, rate_limit: float) -> None:
+        pass
 
     async def wait_for_rate_limit(self) -> bool:
-        """the logic we must check that we can send a request to this provider"""
+        """
+         Wait until the rate limit allows sending a new request.
+
+        Returns:
+            bool: True if a request can be sent; otherwise, False.
+        """
 
     async def send_request(self, request: JobRequest) -> Response:
-        """the logic of sending request with this provider"""
+        """
+        Send a request using this provider.
 
-    def start(self):
-        pass
+        Args:
+            request (JobRequest): The request to be sent.
 
-    async def check_pending_request(self):
-        pass
+        Returns:
+            Response: The response received from the provider.
+        """
 
-    async def run(self):
-        """start the provider to send requests"""
+    def start(self) -> None:
+        """
+        Enable the provider to start sending requests.
+        """
 
-    async def stop(self):
-        pass
+    async def check_pending_request(self) -> None:
+        """
+        Check and process pending requests in the queue.
+        """
+
+    async def _run_job(self) -> None:
+        """run jobs in queues according to their priority
+        the enabled provider will send request on its  rate_limit
+        """
+
+    async def run(self) -> None:
+        """
+        infinite loop for run jobs on the queue
+        if queue is empty it must wait until its filled
+        """
+        while True:
+            await self._run_job()
+
+    async def stop(self) -> None:
+        """
+        Disable the provider to stop sending requests.
+        """
