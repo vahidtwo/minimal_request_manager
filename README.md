@@ -64,5 +64,7 @@ async def main():
 ### CLI 
 for use cli you can run `rmcli` in your terminal
 
+![img](./assets/cli.png)
+
 ## License
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
