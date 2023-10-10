@@ -10,6 +10,18 @@ from log import logger
 
 
 class Provider:
+    """
+    Represents a service provider for sending requests.
+
+    Attributes:
+        name (str): The name of the provider.
+        rate_limit (float): The rate limit for sending requests per second.
+        last_request_time (float): The timestamp of the last sent request.
+        enabled (asyncio.Event): An event that controls whether the provider is enabled.
+        queue (asyncio.PriorityQueue): A priority queue for pending requests.
+        pending_request_queue (asyncio.PriorityQueue): A priority queue for pending requests that are not ready.
+    """
+
     def __init__(self, name, rate_limit):
         self.name = name
         self.rate_limit = rate_limit
@@ -20,7 +32,12 @@ class Provider:
         self.pending_request_queue = PriorityQueue()
 
     async def wait_for_rate_limit(self) -> bool:
-        """the logic we must check that we can send a request to this provider"""
+        """
+         Wait until the rate limit allows sending a new request.
+
+        Returns:
+            bool: True if a request can be sent; otherwise, False.
+        """
         while True:
             current_time = time.time()
 
@@ -32,14 +49,28 @@ class Provider:
                 logger.debug(self)
 
     async def send_request(self, request: Request) -> Response:
-        """the logic of sending request with this provider"""
+        """
+        Send a request using this provider.
+
+        Args:
+            request (Request): The request to be sent.
+
+        Returns:
+            Response: The response received from the provider.
+        """
         logger.debug(f"sending request [{request.name}] with provider {self.name}")
         return Response(status_code=StatusCode.SUCCESS, data={"message": "done"})
 
     def start(self):
+        """
+        Enable the provider to start sending requests.
+        """
         self.enabled.set()
 
     async def check_pending_request(self):
+        """
+        Check and process pending requests in the queue.
+        """
         if self.pending_request_queue.qsize() > 0:
             priority, request = await self.pending_request_queue.get()
             if request.is_ready:
@@ -52,7 +83,9 @@ class Provider:
             self.pending_request_queue.task_done()
 
     async def run(self):
-        """start the provider to send requests"""
+        """
+        Start the provider to send requests.
+        """
         while True:
             await self.enabled.wait()
             await self.wait_for_rate_limit()
@@ -94,6 +127,9 @@ class Provider:
             self.queue.task_done()
 
     async def stop(self):
+        """
+        Disable the provider to stop sending requests.
+        """
         self.enabled.clear()
 
     def __repr__(self):
