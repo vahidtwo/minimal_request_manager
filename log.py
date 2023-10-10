@@ -1,4 +1,4 @@
 import logging
 
-logger = logging.getLogger("toman")
-logger.setLevel(logging.DEBUG)
+logger = logging.Logger("toman", logging.INFO)
+logger.addHandler(logging.StreamHandler())
