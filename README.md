@@ -4,7 +4,7 @@
 
 The Request Manager is a system designed to handle incoming requests and efficiently distribute them to a ordered queue of providers.
 Each provider has its own rate limit, and the system ensures that requests are sent to providers based on their availability and priority.
-
+![diagram](./assets/diagram.png)
 ## Features
 
 - **Dynamic Request Handling:** requests are processed in real-time and dispatched to available providers while respecting rate limits.
