@@ -68,7 +68,7 @@ class Provider:
         pending_request_queue (asyncio.PriorityQueue): A priority queue for pending requests that are not ready.
     """
 
-    def __init__(self, name, rate_limit) -> None:
+    def __init__(self, name: str, rate_limit: float) -> None:
         self.name = name
         self.rate_limit = rate_limit
         self.last_request_time = 0
