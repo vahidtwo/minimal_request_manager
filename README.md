@@ -26,6 +26,10 @@ To use the Outgoing Request Manager in your project, follow these steps:
 3. **Generating Requests:** Whenever a request needs to be sent to a third-party provider, create a Request object and submit it to the manager.
 
 4. **Running the Manager:** Start the manager, which will process incoming requests and distribute them to providers.
+### install 
+```bash
+  pip install  git+https://github.com/vahidtwo/minimal_request_manager.git 
+```
 
 ## Example
 
