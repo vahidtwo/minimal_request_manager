@@ -2,20 +2,20 @@ import asyncio
 import datetime
 from asyncio import Task
 
-from integration.contract import ProviderProtocol, JobRequestProtocol
-from log import logger
+from . import Provider, JobRequest
+from .log import logger
 
 
 class Controller:
     tasks: list[Task]
-    providers = dict[str, ProviderProtocol]
+    providers = dict[str, Provider]
 
-    def __init__(self, providers: list[ProviderProtocol] | None = None):
+    def __init__(self, providers: list[Provider] | None = None):
         """
         Initialize a Controller object.
 
         Args:
-            providers (list[ProviderProtocol]): A list of ProviderProtocol objects to manage.
+            providers (list[Provider]): A list of Provider objects to manage.
         """
         self.providers = (
             {provider.name: provider for provider in providers}
@@ -24,21 +24,21 @@ class Controller:
         )
         self.tasks = []
 
-    def add_provider(self, provider: ProviderProtocol):
+    def add_provider(self, provider: Provider):
         self.providers[provider.name] = provider
 
     @staticmethod
     def new_request_received(
-        provider: ProviderProtocol,
+        provider: Provider,
         priority: int,
         execution_after: datetime.datetime | int = 0,
         request_name: str = "",
-    ) -> JobRequestProtocol:
+    ) -> JobRequest:
         """
          Create a new job request and add it to the provider's queue.
 
         Args:
-            provider (ProviderProtocol): The provider to which the job request is associated.
+            provider (Provider): The provider to which the job request is associated.
             priority (int): The priority of the job request.
             execution_after (datetime.datetime | int, optional): The time when the job should be executed.
                 It can be either a datetime object or an integer representing seconds from the current time.
@@ -46,9 +46,9 @@ class Controller:
             request_name (str, optional): A name or identifier for the job request. Defaults to an empty string.
 
         Returns:
-            JobRequestProtocol: The created JobRequestProtocol object.
+            JobRequest: The created JobRequest object.
         """
-        request = JobRequestProtocol(
+        request = JobRequest(
             name=request_name,
             provider=provider,
             priority=priority,
