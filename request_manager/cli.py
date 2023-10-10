@@ -4,7 +4,7 @@ import random
 
 import questionary
 
-from .controler import Controller
+from .controller import Controller
 from .integration import Provider
 from .integration.utils import CLIActions
 from .log import logger

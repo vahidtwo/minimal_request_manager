@@ -1,6 +1,6 @@
 from .integration.adaptor import StatusCode, Provider, JobRequest, Response
 from .integration.utils import CLIActions
-from .controler import Controller
+from .controller import Controller
 
 __all__ = [
     "Controller",
