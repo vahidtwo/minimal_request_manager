@@ -3,8 +3,7 @@ import enum
 from typing import Any
 
 
-@dataclasses.dataclass
-class StatusCode:
+class StatusCode(enum.IntEnum):
     SUCCESS: int = 200
     FAILED: int = 400
 
@@ -16,10 +15,12 @@ class Response:
 
 
 class CLIActions(enum.StrEnum):
-    SIMULATE = "simulate and start jobs"
-    RUN = "start jobs"
-    ADD_PROVIDER = "add new provider"
-    START_PROVIDER = "start provider"
-    STOP_PROVIDER = "stop provider"
-    ADD_REQUEST = "add request"
-    EXIT = "exit program"
+    WIZARD = "Wizard"
+    RUN = "Start providers"
+    STOP = "Stop providers"
+    SIMULATE_EXAMPLE = "Simulate example"
+    ADD_PROVIDER = "Add new provider"
+    ENABLE_PROVIDER = "Enable provider"
+    DISABLE_PROVIDER = "Disable provider"
+    ADD_REQUEST = "Add new request"
+    EXIT = "Exit program"
