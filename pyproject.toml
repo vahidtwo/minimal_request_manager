@@ -9,7 +9,20 @@ target-version = ['py311']
 
 [project]
 name = "reqeust_manager"
-version = "0.0.1"
-requires = [
-  "questionary==2.0.1"
+version = "1.0.1"
+description = "a simple request manger for my assignment"
+readme = "README.md"
+authors = [
+    { name = "vahid imanian", email = "vahidtwo@gmail.com" },
 ]
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+keywords = ["request_manager", "request manager"]
+dependencies = [
+  "questionary==2.0.1",
+]
+requires-python = ">=3.11"
