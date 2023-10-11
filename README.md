@@ -29,30 +29,42 @@ To use the Outgoing Request Manager in your project, follow these steps:
 4. **Running the Manager:** Start the manager, which will process incoming requests and distribute them to providers.
 ## How to use
 ### install 
+setup your environment
+```bash
+virtualenv .venv
+```
+activate it 
+```bash
+source ./venv/bin/activate
+```
+install package from git
 ```bash
   pip install  git+https://github.com/vahidtwo/minimal_request_manager.git 
 ```
-## Example code
-
+### code example 
 ```python
+import asyncio
 from request_manager import Provider
 from request_manager import Controller
-
+from request_manager.log import logger
+import logging
 
 # Create and configure providers
 async def main():
     provider1 = Provider("P1", 0.2)
     provider2 = Provider("P2", 0.1)
 
-    # Start the manager
+    # Create the manager
     controller = Controller([provider1, provider2])
-    # Create requests with priority and execution timess
+    # Create requests with priority and execution times 
+    # this will add to a priority queue 
     controller.new_request_received(
         request_name=f"long request execution time",
         provider=provider1,
         priority=0,
         execution_after=3,
     )
+    
     controller.new_request_received(
         request_name=f"long request execution time",
         provider=provider2,
@@ -60,11 +72,29 @@ async def main():
         execution_after=3,
     )
     controller.start()
+    await controller.wait_for_complete()  # wait for all request has been sent
+
+
+if __name__ == "__main__":
+    logger.setLevel(logging.INFO)
+
+    asyncio.run(main())
+
 ```
 ### CLI 
 for use cli you can run `rmcli` in your terminal
 
 ![img](./assets/cli.png)
+#### Available commands 
+- Wizard: a wizard to create producer and reqeust without any writing code and simulate the reqeust management  
+- Start providers: start providers to send requests 
+- Stop providers: stop providers from sending requests
+- Simulate example: run a simple simulation
+- Add new provider: add new provider to system
+- Enable provider: enable a provider
+- Disable provider: disable a provider
+- Add new request: add new request to a provider
+- Exit program: exit
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
