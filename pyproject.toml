@@ -9,7 +9,7 @@ target-version = ['py311']
 
 [project]
 name = "reqeust_manager"
-version = "1.0.1"
+version = "0.0.1"
 description = "a simple request manger for my assignment"
 readme = "README.md"
 authors = [
