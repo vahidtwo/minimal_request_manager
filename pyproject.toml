@@ -8,6 +8,8 @@ target-version = ['py311']
 
 
 [project]
+name = "reqeust_manager"
+version = "0.0.1"
 requires = [
   "questionary==2.0.1"
 ]
