@@ -1,11 +1,10 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools", "wheel", "flit_core >=2,<3"]
+requires = ["setuptools", "wheel"]
 
 [tool.black]
 line-length = 99
 target-version = ['py311']
-
 
 [project]
 name = "reqeust_manager"
