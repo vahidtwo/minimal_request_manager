@@ -3,6 +3,8 @@ import datetime
 from asyncio import Task
 
 from .integration import Provider, JobRequest
+from .integration.abc import ProviderABC
+from .integration.adaptor import ProviderContainer
 from .log import logger
 
 

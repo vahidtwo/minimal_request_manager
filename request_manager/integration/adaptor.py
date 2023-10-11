@@ -1,50 +1,14 @@
 import asyncio
-import logging
-from asyncio import PriorityQueue
-from .utils import StatusCode, Response
-
 import datetime
+import logging
 import time
 
 from request_manager.log import logger
+from .abc import JobRequestABC, ProviderABC
+from .utils import StatusCode, Response
 
 
-class JobRequest:
-    def __init__(
-        self,
-        provider: "Provider",
-        priority: int,
-        execution_after: datetime.datetime | int = 0,
-        name: str = "",
-    ):
-        """
-        Initialize a JobRequest object.
-
-        Args:
-            provider (Provider): The provider associated with this job request.
-            priority (int): The priority of the job request. Higher values indicate higher priority.
-            execution_after (datetime.datetime | int, optional): The time when the job should be executed.
-                It can be either a datetime object or an integer representing seconds from the current time.
-                Defaults to 0, which means immediate execution.
-            name (str, optional): A name or identifier for the job request. Defaults to an empty string.
-        """
-        self.name = name
-        self.provider = provider
-        self.retry_count = 0
-        # for use in PriorityQueue we must invert the priority to act as a max-heap
-        self.priority = priority * -1
-        if isinstance(execution_after, datetime.datetime):
-            self.execution_time = execution_after.timestamp()
-        elif isinstance(execution_after, int):
-            self.execution_time = time.time() + execution_after
-
-    def __repr__(self):
-        return (
-            f"JobRequest(name={self.name}, priority={self.priority * -1},"
-            f" execution_time={datetime.datetime.fromtimestamp(self.execution_time).strftime('%H:%M:%S')},"
-            f" provider={self.provider.name})"
-        )
-
+class JobRequest(JobRequestABC):
     def __lt__(self, other: "JobRequest"):
         """Return a string representation of the JobRequest object."""
         return self.priority < other.priority
@@ -55,7 +19,7 @@ class JobRequest:
         return time.time() >= self.execution_time
 
 
-class Provider:
+class Provider(ProviderABC):
     """
     Represents a service provider for sending requests.
 
