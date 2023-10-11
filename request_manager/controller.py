@@ -10,31 +10,28 @@ from .log import logger
 
 class Controller:
     tasks: list[Task]
-    providers = dict[str, Provider]
+    providers = dict[str, ProviderABC]
+    request_counter = 0
 
-    def __init__(self, providers: list[Provider] | None = None):
+    def __init__(self, providers: list[ProviderABC] | None = None):
         """
         Initialize a Controller object.
 
         Args:
             providers (list[Provider]): A list of Provider objects to manage.
         """
-        self.providers = (
-            {provider.name: provider for provider in providers}
-            if providers is not None
-            else dict()
-        )
+        self.providers = ProviderContainer(provider_list=providers)
         self.tasks = []
 
-    def add_provider(self, provider: Provider):
+    def add_provider(self, provider: ProviderABC):
         self.providers[provider.name] = provider
 
-    @staticmethod
     def new_request_received(
+        self,
         provider: Provider,
-        priority: int,
+        priority: int = 10,
         execution_after: datetime.datetime | int = 0,
-        request_name: str = "",
+        request_name: str | None = None,
     ) -> JobRequest:
         """
          Create a new job request and add it to the provider's queue.
@@ -51,13 +48,14 @@ class Controller:
             JobRequest: The created JobRequest object.
         """
         request = JobRequest(
-            name=request_name,
+            name=request_name if request_name else f"{self.request_counter}",
             provider=provider,
             priority=priority,
             execution_after=execution_after,
         )
         provider.queue.put_nowait((request.priority, request))
         logger.info(f"added {request}")
+        self.request_counter += 1
         return request
 
     def start(self):
@@ -66,7 +64,7 @@ class Controller:
         This method creates tasks for each provider to run concurrently
         """
         self.tasks = [
-            asyncio.create_task(provider.run()) for provider in self.providers.values()
+            asyncio.create_task(provider.run()) for provider in self.providers
         ]
 
     async def wait_for_complete(self):
@@ -75,10 +73,10 @@ class Controller:
 
         This method waits for providers with enabled status to finish their tasks and pending request queue.
         """
-        for provider in self.providers.values():
+        for provider in self.providers:
             if provider.enabled.is_set():
-                await provider.queue.join()
                 await provider.pending_request_queue.join()
+                await provider.queue.join()
 
     def stop(self):
         """

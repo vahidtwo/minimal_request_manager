@@ -9,7 +9,7 @@ from tests.fixtures import controller, provider1
 class TestController:
     def test_add_provider(self, controller, provider1):
         controller.add_provider(provider1)
-        assert "test_provider" in controller.providers
+        assert "test_provider" in controller.providers.container
 
     def test_new_request_received(self, controller, provider1):
         priority = 1

@@ -13,7 +13,6 @@ class JobRequest(JobRequestABC):
         """Return a string representation of the JobRequest object."""
         return self.priority < other.priority
 
-    @property
     def is_ready(self) -> bool:
         """Check if the job request is ready for execution."""
         return time.time() >= self.execution_time
@@ -32,16 +31,7 @@ class Provider(ProviderABC):
         pending_request_queue (asyncio.PriorityQueue): A priority queue for pending requests that are not ready.
     """
 
-    def __init__(self, name: str, rate_limit: float) -> None:
-        self.name = name
-        self.rate_limit = rate_limit
-        self.last_request_time = 0
-        self.enabled = asyncio.Event()
-        self.enabled.set()
-        self.queue = PriorityQueue()
-        self.pending_request_queue = PriorityQueue()
-
-    async def wait_for_rate_limit(self) -> bool:
+    async def wait_for_rate_limit(self) -> None:
         """
          Wait until the rate limit allows sending a new request.
 
@@ -50,13 +40,13 @@ class Provider(ProviderABC):
         """
         while True:
             current_time = time.time()
-
             if (current_time - self.last_request_time) >= 1 / self.rate_limit:
-                self.last_request_time = current_time
-                return True
+                return
             else:
-                logger.debug(f"waiting for rate limit...")
+                logger.debug(f"\n waiting for rate limit...")
                 logger.debug(self)
+                # used for not block program in this coroutine
+                await asyncio.sleep(0.001)  # TODO find better solution
 
     async def send_request(self, request: JobRequest) -> Response:
         """
@@ -69,6 +59,7 @@ class Provider(ProviderABC):
             Response: The response received from the provider.
         """
         logger.debug(f"sending request [{request.name}] with provider {self.name}")
+        self.last_request_time = time.time()
         return Response(status_code=StatusCode.SUCCESS, data={"message": "done"})
 
     def start(self) -> None:
@@ -81,34 +72,40 @@ class Provider(ProviderABC):
         """
         Check and process pending requests in the queue.
         """
-        if self.pending_request_queue.qsize() > 0:
-            priority, request = await self.pending_request_queue.get()
-            if request.is_ready:
-                logger.info(
-                    f"add pending request[{request.name}] to master queue in provider[{self.name}]"
-                )
-                await self.queue.put((priority, request))
-            else:
-                await self.pending_request_queue.put((priority, request))
-            self.pending_request_queue.task_done()
+        if self.pending_request_queue.qsize() == 0:
+            return
+        priority, request = await self.pending_request_queue.get()
+        if request.is_ready():
+            logger.info(
+                f"add pending request[{request.name}] to master queue in provider[{self.name}]"
+            )
+            await self.queue.put((priority, request))
+        else:
+            await self.pending_request_queue.put((priority, request))
+        self.pending_request_queue.task_done()
 
     async def _run_job(self) -> None:
         """
-        run jobs in queues according to their priority
-        the enabled provider will send request on its  rate_limit
-        the jobs collect from the queue
-        if job is ready (arrive to execution time) send request
-        if job is not ready send it to pending queue
-
-        if a job field we retry 3 time before drop it
-        # TODO change it from hardcoded value and add this task to a list for trac the errors
+        Run jobs in queues according to their priority.
+        The enabled provider will send requests based on its rate limit.
+        Jobs are collected from the queue.
+        If a job is ready (arrived at execution time), send the request.
+        If a job is not ready, send it to the pending queue.
+        If a job fails, it will be retried up to 3 times before being dropped.
+        @todo The hardcoded value for the retry count should be changed and
+            the errors should be save for tracking.
         """
         await self.enabled.wait()
         await self.wait_for_rate_limit()
         await self.check_pending_request()
         request: JobRequest
+        if self.pending_request_queue.qsize() == 0 and self.queue.qsize() == 0:
+            # used for not block program in this coroutine
+            await asyncio.sleep(0.001)
+        if self.pending_request_queue.qsize() >= 0 and self.queue.qsize() == 0:
+            return
         priority, request = await self.queue.get()
-        if request.is_ready is False:
+        if not request.is_ready():
             logger.info(
                 f"add request[{request.name}] to pending queue in provider[{self.name}]"
             )
@@ -128,16 +125,16 @@ class Provider(ProviderABC):
             datetime.datetime.fromtimestamp(request.execution_time).strftime(
                 "%H:%M:%S"
             ),
-            self.queue.qsize(),
+            self.get_queue_size(),
         )
-        logger.info("{}\n| {} |\n{}".format("+" * 100, msg, "+" * 100))
+        logger.info(f'\n{"+" * 100}')
+        logger.info(f"| {msg} |")
+        logger.info(f'{"+" * 100}\n')
+        if request.retry_count >= 3:
+            logging.error(f"{request} in provider {self.name} has been retried 3 times")
+            self.queue.task_done()
+            return
         if result.status_code != StatusCode.SUCCESS:
-            if request.retry_count >= 3:
-                logging.error(
-                    f"{request} in provider {self.name} has been retried 3 times"
-                )
-                self.queue.task_done()
-                return
             request.retry_count += 1
             await self.queue.put((priority, request))
         self.queue.task_done()
@@ -145,21 +142,47 @@ class Provider(ProviderABC):
     async def run(self) -> None:
         """
         infinite loop for run jobs on the queue
+        if queue is empty it must wait until its filled
         """
-        while True:
+        while True:  # TODO replace with better solution
             await self._run_job()
 
-    async def stop(self) -> None:
+    def stop(self) -> None:
         """
         Disable the provider to stop sending requests.
         """
         self.enabled.clear()
 
-    def __repr__(self):
-        last_request_time_formated = datetime.datetime.fromtimestamp(
-            self.last_request_time
-        ).strftime("%Y-%m-%d %H:%M:%S")
-        return (
-            f"Provider(name={self.name}, rate_limit={self.rate_limit}/s,"
-            f" last_request_time={last_request_time_formated}, enabled={self.enabled.is_set()})"
-        )
+    def get_queue_size(self) -> bool:
+        """
+        return queues size
+        """
+        return self.queue.qsize() + self.pending_request_queue.qsize()
+
+
+class ProviderContainer:
+    def __init__(self, provider_list: list[ProviderABC] | None = None):
+        self.container = {}
+        if provider_list is None:
+            return
+        for provider in provider_list:
+            self.container[provider.name] = provider
+
+    def __getitem__(self, item: ProviderABC | str):
+        if isinstance(item, str):
+            return self.container[item]
+        return self.container[item.name]
+
+    def __setitem__(self, key: str, item: ProviderABC):
+        self.container[key] = item
+
+    def __add__(self, other: ProviderABC):
+        self.container[other.name] = other
+        return self
+
+    def __iter__(self):
+        for provider in self.container.values():
+            yield provider
+
+    def __len__(self) -> int:
+        return len(self.container)

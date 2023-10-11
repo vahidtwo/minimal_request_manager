@@ -15,11 +15,11 @@ class TestJobRequest:
         name = "test_request"
 
         request = JobRequest(provider1, priority, execution_after, name)
-        assert request.is_ready is False
+        assert request.is_ready() is False
 
         execution_after = datetime.datetime.now() - datetime.timedelta(minutes=1)
         request = JobRequest(provider1, priority, execution_after, name)
-        assert request.is_ready is True
+        assert request.is_ready() is True
 
 
 class TestProvider:
@@ -44,7 +44,7 @@ class TestProvider:
     async def test_check_pending_request(self, provider1):
         request = Mock()
         request.name = "test_request"
-        request.is_ready = True
+        request.is_ready = lambda: True
 
         provider1.pending_request_queue.put_nowait((1, request))
         await provider1.check_pending_request()
@@ -68,5 +68,5 @@ class TestProvider:
     @pytest.mark.asyncio
     async def test_stop(self, provider1):
         provider1.enabled.set()
-        await provider1.stop()
+        provider1.stop()
         assert not provider1.enabled.is_set()
