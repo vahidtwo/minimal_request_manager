@@ -58,7 +58,7 @@ class DisableProviderCommand(Command):
             choices=available_providers,
         ).ask_async()
         provider = self.controller.providers[selected_provider_name]
-        await provider.stop()
+        provider.stop()
 
 
 class AddRequestCommand(Command):
@@ -69,13 +69,9 @@ class AddRequestCommand(Command):
             questionary.print("No provider is available to add request")
             return
         available_providers = [provider.name for provider in providers]
-        priority = int(
-            await questionary.text("Put your priority", default="1").ask_async()
-        )
+        priority = int(await questionary.text("Put your priority", default="1").ask_async())
         execution_time = int(
-            await questionary.text(
-                "Put your execution time in seconds", default="0"
-            ).ask_async()
+            await questionary.text("Put your execution time in seconds", default="0").ask_async()
         )
         selected_provider_name = await questionary.select(
             "Which provider do you want to use?", choices=available_providers
@@ -200,9 +196,7 @@ class SimulateExampleCommand(Command):
 class AddProviderCommand(Command):
     async def execute(self):
         """add provider to my controller"""
-        provider_name = await questionary.text(
-            "put name of provider", default="P[n]"
-        ).ask_async()
+        provider_name = await questionary.text("put name of provider", default="P[n]").ask_async()
 
         rate_limit = float(
             await questionary.text(
